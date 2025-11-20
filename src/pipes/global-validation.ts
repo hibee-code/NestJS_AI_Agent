@@ -1,12 +1,21 @@
-import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common';
-import { validateSchema } from '../utils/validator.util';
+import { ValidationPipe, ValidationPipeOptions } from '@nestjs/common';
 
-
-@Injectable()
-export class GlobalValidationPipe implements PipeTransform {
-transform(value: any) {
-const error = validateSchema(value);
-if (error) throw new BadRequestException(error);
-return value;
-}
+/**
+ * GlobalValidationPipe provides centralized validation settings.
+ * Adjust options below to change transform/whitelist/forbid behavior.
+ */
+export class GlobalValidationPipe extends ValidationPipe {
+  constructor(options?: ValidationPipeOptions) {
+    super({
+      // convert payloads to DTO instances
+      transform: true,
+      // strip properties that do not have any decorators
+      whitelist: true,
+      // throw on unknown properties (set to false if you allow extras)
+      forbidNonWhitelisted: false,
+      // provide detailed errors
+      disableErrorMessages: false,
+      ...(options || {}),
+    });
+  }
 }
