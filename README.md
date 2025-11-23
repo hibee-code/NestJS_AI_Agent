@@ -25,74 +25,77 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
-## Project setup
+# NestJS AI Agent
 
-```bash
-$ yarn install
+A minimal, opinionated NestJS backend that demonstrates building an AI Agent: it connects to MongoDB, fetches customer data, optionally calls an external premium API, and synthesizes a final answer using OpenAI.
+
+Key principles: KISS, DRY, and clear separation of concerns — the `AgentService` orchestrates, `AiService` encapsulates AI calls, and `CustomerService` encapsulates DB access.
+
+## Features
+
+- Mongoose integration for persistence
+- Health endpoint that checks MongoDB connectivity
+- Agent endpoint: fetch customer, call premium API (optional), call OpenAI and return synthesized answer
+- Small AI wrapper using `openai` SDK (configurable via `OPENAI_MODEL`)
+
+## Environment
+
+Create a `.env` file at the project root with the values below (example):
+
+```
+MONGODB_URI=mongodb://localhost:27017/ai-agent
+OPENAI_API_KEY=sk_...
+OPENAI_MODEL=gpt-3.5-turbo
+PREMIUM_API_URL=http://localhost:4000
+PORT=3000
 ```
 
-## Compile and run the project
+## Install
 
 ```bash
-# development
-$ yarn run start
-
-# watch mode
-$ yarn run start:dev
-
-# production mode
-$ yarn run start:prod
+yarn install
 ```
 
-## Run tests
+## Run (development)
 
 ```bash
-# unit tests
-$ yarn run test
-
-# e2e tests
-$ yarn run test:e2e
-
-# test coverage
-$ yarn run test:cov
+yarn start:dev
 ```
 
-## Deployment
+## Endpoints (Postman)
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+- Health: `GET /api/health`
+  - Returns `{ status: 'up'|'down', mongo: { readyState, error? }, timestamp }`
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+- Create customer: `POST /api/customer`
+  - Body (JSON):
+    ```json
+    {
+      "name": "Test User",
+      "email": "test@example.com",
+      "phone": "555-0100",
+      "policies": [ { "policyNumber": "P-001", "type": "auto", "coverageAmount": 50000 } ]
+    }
+    ```
 
-```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
-```
+- List customers: `GET /api/customer`
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+- Agent insight: `GET /api/agent/customer/:id/insight`
+  - Returns `{ customer, premium, answer }` where `answer` is the assistant output (fallback if `OPENAI_API_KEY` not set).
 
-## Resources
+## Testing with Postman
 
-Check out a few resources that may come in handy when working with NestJS:
+1. Start app: `yarn start:dev`
+2. Hit `GET http://localhost:3000/api/health` to confirm DB connectivity.
+3. Create a customer using `POST http://localhost:3000/api/customer`.
+4. Call `GET http://localhost:3000/api/agent/customer/{_id}/insight` using `_id` from created customer.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## Notes & Next Steps
 
-## Support
+- `CustomerController` provides basic create/list routes for testing. In production you'd add pagination, authentication, and stricter validation.
+- You can provide a mock `PREMIUM_API_URL` to exercise the premium path.
+- Consider enabling strict startup by waiting for DB connection before `app.listen()` in `main.ts` for containerized deployments.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+---
 
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+If you want, I can add: unit tests for `AgentService`, API docs (Swagger), or a simple mock premium service for local testing.
