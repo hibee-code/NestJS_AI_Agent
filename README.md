@@ -90,6 +90,45 @@ yarn start:dev
 3. Create a customer using `POST http://localhost:3000/api/customer`.
 4. Call `GET http://localhost:3000/api/agent/customer/{_id}/insight` using `_id` from created customer.
 
+## Mocking / alternatives for premium data
+
+You have several ways to provide premium details to the Agent without a real external premium service:
+
+1) Run the local mock premium server (recommended for testing)
+
+```bash
+# install dependencies for the mock server (one-time)
+yarn add express body-parser
+
+# start the mock premium server
+node scripts/mock-premium.js
+
+# then point your app to it
+export PREMIUM_API_URL=http://localhost:4000
+export PREMIUM_API_MODE=mock
+```
+
+2) Use the local computation mode (no external HTTP calls)
+
+Set `PREMIUM_API_MODE=local` and the Agent will compute a simple premium estimate from the customer's policies.
+
+```bash
+export PREMIUM_API_MODE=local
+```
+
+3) Use your real premium API
+
+Set `PREMIUM_API_URL` to your service URL and leave `PREMIUM_API_MODE` unset or set to `external`.
+
+```bash
+export PREMIUM_API_URL=https://api.your-premium-service.com
+export PREMIUM_API_MODE=external
+```
+
+Notes:
+- The mock server responds to POST `/premium` with a deterministic premium estimate useful for integration testing.
+- The local mode is useful for offline development or CI where you don't want external dependencies.
+
 ## Notes & Next Steps
 
 - `CustomerController` provides basic create/list routes for testing. In production you'd add pagination, authentication, and stricter validation.
